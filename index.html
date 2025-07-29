@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -5,17 +6,165 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Симулятор ППО: Захист України</title>
     <style>
-        body { margin: 0; background: #1a1a1a; color: #fff; font-family: Arial, sans-serif; overflow: hidden; }
-        #map-background { position: absolute; top: 0; left: 0; width: 10000px; height: 10000px; z-index: 0; transform-origin: top left; }
-        #map-background svg { width: 100%; height: 100%; }
-        canvas { display: block; position: absolute; z-index: 1; background: transparent; }
-        #ui { position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; z-index: 2; }
-        #shop { position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; z-index: 2; }
-        #minimap { position: fixed; bottom: 10px; right: 10px; border: 1px solid #fff; z-index: 2; }
-        #telemetry { position: absolute; background: rgba(0,0,0,0.7); padding: 5px; border-radius: 3px; display: none; z-index: 2; }
-        button { background: #333; color: #fff; border: none; padding: 5px 10px; margin: 2px; cursor: pointer; }
-        button:hover { background: #555; }
-        button:disabled { background: #222; color: #666; cursor: not-allowed; }
+        body { 
+    margin: 0; 
+    background: #1a1a1a; 
+    color: #fff; 
+    font-family: Arial, sans-serif; 
+    overflow: hidden; 
+}
+#map-background { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    z-index: 0; 
+    transform-origin: top left; 
+}
+#map-background svg { 
+    width: 100%; 
+    height: 100%; 
+}
+canvas { 
+    display: block; 
+    position: absolute; 
+    z-index: 1; 
+    background: transparent; 
+    width: 100vw; 
+    height: 100vh; 
+}
+#ui { 
+    position: fixed; 
+    top: 5px; 
+    right: 5px; 
+    background: rgba(0,0,0,0.7); 
+    padding: 5px; 
+    border-radius: 5px; 
+    z-index: 2; 
+}
+#shop { 
+    position: fixed; 
+    bottom: 60px;
+    left: 5px; 
+    right: 5px; 
+    background: rgba(0,0,0,0.7); 
+    padding: 5px; 
+    border-radius: 5px; 
+    z-index: 2; 
+    display: block; 
+    transition: transform 0.3s ease; 
+}
+#shop.collapsed {
+    transform: translateY(100%);
+}
+#minimap { 
+    position: fixed; 
+    bottom: 5px; 
+    right: 5px; 
+    border: 1px solid #fff; 
+    z-index: 2; 
+}
+#telemetry { 
+    position: absolute; 
+    background: rgba(0,0,0,0.7); 
+    padding: 3px; 
+    border-radius: 3px; 
+    display: none; 
+    z-index: 2; 
+    font-size: 10px; 
+}
+button { 
+    background: #333; 
+    color: #fff; 
+    border: none; 
+    padding: 5px 10px; 
+    margin: 2px; 
+    cursor: pointer; 
+}
+button:hover { 
+    background: #555; 
+}
+button:disabled { 
+    background: #222; 
+    color: #666; 
+    cursor: not-allowed; 
+}
+#toggleShop { 
+    position: fixed;
+    bottom: 5px;
+    left: 5px;
+    z-index: 3;
+    padding: 5px 10px;
+    font-size: 12px;
+}
+@media (max-width: 768px) {
+    #ui, #shop {
+        font-size: 10px; 
+        padding: 3px;
+        box-sizing: border-box;
+    }
+    #ui {
+        top: 2px;
+        right: 2px;
+        max-width: 150px; 
+    }
+    #shop {
+        max-width: 95%;
+        max-height: 40vh;
+        overflow-y: auto;
+        bottom: 60px;
+    }
+    #minimap {
+        width: 80px;
+        height: 80px;
+    }
+    button {
+        padding: 4px 6px;
+        font-size: 9px; 
+        margin: 1px;
+        width: 100%;
+        text-align: left;
+    }
+    #toggleShop {
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+    canvas, #map-background {
+        width: 100vw;
+        height: 100vh;
+    }
+}
+@media (min-width: 769px) {
+    #ui, #shop {
+        font-size: 16px;
+        padding: 10px;
+    }
+    #shop {
+        max-width: none;
+        max-height: none;
+        overflow-y: visible;
+        bottom: 10px;
+        left: 10px;
+    }
+    #minimap {
+        width: 200px;
+        height: 200px;
+    }
+    button {
+        padding: 5px 10px;
+        font-size: 14px;
+        margin: 2px;
+        width: auto;
+    }
+    #toggleShop {
+        display: none;
+    }
+    canvas, #map-background {
+        width: 100vw;
+        height: 100vh;
+    }
+}
     </style>
 </head>
 <body>
@@ -25,14 +174,16 @@
     </div>
     <canvas id="gameCanvas"></canvas>
     <canvas id="minimap" width="200" height="200"></canvas>
-    <div id="ui">
-        <p>Очки: <span id="points">85</span></p>
-        <p>Енергія: <span id="energy">100</span></p>
-        <p>Цілі: <span id="targets">0</span></p>
-        <p>Збито: <span id="kills">0</span></p>
-        <p>Хвиля: <span id="wave">0</span></p>
-        <p>Місія: <span id="mission">Захистити цілі від нескінченних хвиль</span></p>
-    </div>
+   <div id="ui">
+    <p>Очки: <span id="points">85</span></p>
+    <p>Енергія: <span id="energy">100</span></p>
+    <p>Цілі: <span id="targets">0</span></p>
+    <p>Збито: <span id="kills">0</span></p>
+    <p>Хвиля: <span id="wave">0</span></p>
+    <p>Час доби: <span id="timeOfDay">День</span></p>
+    <p>Погода: <span id="weather">Ясно</span></p>
+    <p>Місія: <span id="mission">Захистити цілі від нескінченних хвиль</span></p>
+</div>
    <div id="shop">
     <p>Магазин:</p>
     <button id="buyDShK" onclick="startBuyPVO('dshk')">ДШК (20) [1]</button>
@@ -61,18 +212,17 @@
     <div id="devPanel" style="display: none;">
         <p>Панель розробника:</p>
         <label>Тип дрона:</label>
-        <select id="droneType">
-            <option value="recon">Орлан</option>
-            <option value="strike">Ланцет</option>
-            <option value="decoy">Декой</option>
-            <option value="swarm">Рій</option>
-            <option value="kamikaze">Шахед</option>
-            <option value="stealth">Стелс</option>
-            <option value="special">Спеціальний</option> 
-            <option value="ballistic-short">Іскандер</option>
-            <option value="ballistic-medium">Точка-У</option>
-            <option value="rocket">Град</option>
-        </select>
+       <select id="droneType">
+    <option value="recon">Орлан</option>
+    <option value="strike">Ланцет</option>
+    <option value="decoy">Декой</option>
+    <option value="swarm">Рій</option>
+    <option value="kamikaze">Шахед</option>
+    <option value="stealth">Стелс</option>
+    <option value="special">Спеціальний</option> 
+    <option value="ballistic-short">Іскандер</option>
+    <option value="ballistic-medium">Точка-У</option>
+</select>
         <label>Кількість:</label>
         <input id="droneQuantity" type="number" min="1" max="10" value="1">
         <label>Швидкість:</label>
@@ -104,6 +254,27 @@ let developerMode = false, mobileAIMode = true, gameSpeed = 1;
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 const FPS = 60;
 const SCALE_FACTOR = 1 / (10 * 60); 
+let gameTime = 0; 
+let weather = { type: 'clear', nextChange: Date.now() + 300000 / gameSpeed }; 
+let weatherParticles = []; 
+
+
+function getTimeOfDay() {
+    const hour = gameTime % 24;
+    if (hour >= 6 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 18) return 'day';
+    if (hour >= 18 && hour < 24) return 'evening';
+    return 'night';
+}
+
+
+function changeWeather() {
+    const rand = Math.random();
+    weather.type = rand < 0.4 ? 'clear' : rand < 0.7 ? 'cloudy' : rand < 0.85 ? 'rain' : rand < 0.95 ? 'fog' : 'storm';
+    weather.nextChange = Date.now() + (Math.random() * 300000 + 300000) / gameSpeed;  
+    ui.mission.textContent = `Погода змінилася: ${weather.type === 'clear' ? 'Ясно' : weather.type === 'cloudy' ? 'Хмарно' : weather.type === 'rain' ? 'Дощ' : weather.type === 'fog' ? 'Туман' : 'Шторм'}`;
+}
+
 
 const ui = {
     points: document.getElementById('points'), 
@@ -112,6 +283,10 @@ const ui = {
     wave: document.getElementById('wave'), 
     mission: document.getElementById('mission'),
     speedDisplay: document.getElementById('gameSpeed'),
+    buttons: { /* існуючі кнопки */ },
+    telemetry: document.getElementById('telemetry'),
+    timeOfDay: document.getElementById('timeOfDay'),
+    weather: document.getElementById('weather'),
     buttons: {
         dshk: document.getElementById('buyDShK'),
         zu232: document.getElementById('buyZU232'),
@@ -328,43 +503,55 @@ class Missile {
         this.soundPlayed = false;
     }
     move() {
-        if (paused) return false;
-        const distanceTraveled = Math.hypot(this.x - this.startX, this.y - this.startY);
-        if (distanceTraveled > this.maxRange) {
-            this.missed = true;
-            return true;
+    if (paused) return false;
+    const distanceTraveled = Math.hypot(this.x - this.startX, this.y - this.startY);
+    if (distanceTraveled > this.maxRange) {
+        this.missed = true;
+        return true;
+    }
+    if (this.homing) {
+        const targets = [...drones, ...threats.filter(t => t.type.includes('ballistic'))];
+        const nearestTarget = targets.reduce((min, t) => {
+            const dist = Math.hypot(t.x - this.x, t.y - this.y);
+            return dist < Math.hypot(min.x - this.x, min.y - this.y) && !t.destroyed ? t : min;
+        }, {x: Infinity, y: Infinity});
+        if (nearestTarget.x !== Infinity && Math.hypot(nearestTarget.x - this.x, nearestTarget.y - this.y) < 1250) {
+            this.targetX = nearestTarget.x;
+            this.targetY = nearestTarget.y;
         }
-        if (this.homing) {
-            const targets = [...drones, ...threats.filter(t => t.type.includes('ballistic'))];
-            const nearestTarget = targets.reduce((min, t) => {
-                const dist = Math.hypot(t.x - this.x, t.y - this.y);
-                return dist < Math.hypot(min.x - this.x, min.y - this.y) && !t.destroyed ? t : min;
-            }, {x: Infinity, y: Infinity});
-            if (nearestTarget.x !== Infinity && Math.hypot(nearestTarget.x - this.x, nearestTarget.y - this.y) < 1250) {
-                this.targetX = nearestTarget.x;
-                this.targetY = nearestTarget.y;
-            }
-        }
-        const dx = this.targetX - this.x, dy = this.targetY - this.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < this.speed * gameSpeed) {
-            this.x = this.targetX; this.y = this.targetY;
-            const hitTarget = [...drones, ...threats].find(t => Math.hypot(t.x - this.x, t.y - this.y) < 166 && !t.destroyed);
-            if (hitTarget && Math.random() > (this.sourceType === 'dshk' || this.sourceType === 'zu232' ? 0.8 : 0)) {
-                hitTarget.health -= this.damage;
-                if (hitTarget.health <= 0) {
-                    hitTarget.destroyed = true;
-                    explosions.push(new Explosion(this.x, this.y));
-                    kills++;
+    }
+    const dx = this.targetX - this.x, dy = this.targetY - this.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < this.speed * gameSpeed) {
+        this.x = this.targetX; this.y = this.targetY;
+        const hitTarget = [...drones, ...threats].find(t => Math.hypot(t.x - this.x, t.y - this.y) < 166 && !t.destroyed);
+        if (hitTarget && Math.random() > (this.sourceType === 'dshk' || this.sourceType === 'zu232' ? 0.8 : 0)) {
+            let effectiveDamage = this.damage;
+            if (this.sourceType === 'dshk' || this.sourceType === 'zu232') {
+                if (hitTarget.type === 'recon' || hitTarget.type === 'decoy' || hitTarget.type === 'swarm') {
+                    effectiveDamage *= 1.5; 
+                } else if (hitTarget.type.includes('ballistic')) {
+                    effectiveDamage *= 0.5; 
+                }
+            } else {
+                if (hitTarget.type.includes('ballistic')) {
+                    effectiveDamage *= 1.2;  
                 }
             }
-            this.missed = true;
-            return true;
+            hitTarget.health -= effectiveDamage;
+            if (hitTarget.health <= 0) {
+                hitTarget.destroyed = true;
+                explosions.push(new Explosion(this.x, this.y));
+                kills++;
+            }
         }
-        const speedFactor = Math.min(this.speed * gameSpeed / dist, 1);
-        this.x += dx * speedFactor; this.y += dy * speedFactor;
-        return false;
+        this.missed = true;
+        return true;
     }
+    const speedFactor = Math.min(this.speed * gameSpeed / dist, 1);
+    this.x += dx * speedFactor; this.y += dy * speedFactor;
+    return false;
+}
     draw() {
         ctx.fillStyle = this.sourceType === 'dshk' ? 'orange' : this.sourceType === 'zu232' ? 'yellow' : this.sourceType === 'f16' ? 'cyan' : 'white';
         ctx.fillRect(this.x - 4, this.y - 8, 8, 16);
@@ -460,55 +647,61 @@ class TransportPlane {
 
 class PVO {
     constructor(x, y, type) {
-        this.x = x; this.y = y; this.type = type; this.health = 100;
-        this.energy = 100;  
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.health = 100;
+        this.energy = 100;
         this.baseRadius = type === 'f16' ? 5000 :
-                         type === 'patriot' ? 15000 : 
-                         type === 's300' ? 10000 : 
-                         type === 'bukm1' ? 3500 : 
-                         type === 's125' ? 2500 : 
-                         type === 'mobile' ? 900 : 
-                         type === 'zu232' ? 250 : 
-                         type === 'igla' ? 500 : 
+                         type === 'patriot' ? 15000 :
+                         type === 's300' ? 10000 :
+                         type === 'bukm1' ? 3500 :
+                         type === 's125' ? 2500 :
+                         type === 'mobile' ? 900 :
+                         type === 'zu232' ? 250 :
+                         type === 'igla' ? 500 :
                          100;
         this.radius = this.baseRadius;
         this.reloadTime = type === 'f16' ? 10000 :
-                         type === 'patriot' ? 30000 : 
-                         type === 's300' ? 20000 : 
-                         type === 'bukm1' ? 12000 : 
-                         type === 's125' ? 60000 : 
-                         type === 'mobile' ? 6000 : 
-                         type === 'zu232' ? 1000 : 
-                         type === 'igla' ? 10000 : 
+                         type === 'patriot' ? 30000 :
+                         type === 's300' ? 20000 :
+                         type === 'bukm1' ? 12000 :
+                         type === 's125' ? 60000 :
+                         type === 'mobile' ? 6000 :
+                         type === 'zu232' ? 10000 :
+                         type === 'igla' ? 10000 :
+                         type === 'dshk' ? 5000 :
                          4000;
-        this.shotsBeforeReload = type === 'f16' ? 6 :
-                                type === 'patriot' ? 4 : 
-                                type === 's300' ? 4 : 
-                                type === 'bukm1' ? 4 : 
-                                type === 's125' ? 2 : 
-                                type === 'mobile' ? 2 : 
-                                type === 'zu232' ? Infinity : 
+        this.shotsBeforeReload = type === 'f16' ? 3 : 
+                                type === 'patriot' ? 2 : 
+                                type === 's300' ? 2 : 
+                                type === 'bukm1' ? 2 : 
+                                type === 's125' ? 1 : 
+                                type === 'mobile' ? 1 :
+                                type === 'zu232' ? 50 : 
                                 type === 'igla' ? 1 : 
+                                type === 'dshk' ? 25 : 
                                 Infinity;
         this.ammo = this.shotsBeforeReload;
-        this.shotDelay = type === 'f16' ? 1000 :
-                        type === 'patriot' ? 2000 : 
-                        type === 's300' ? 2500 : 
-                        type === 'bukm1' ? 3000 : 
-                        type === 's125' ? 5000 : 
-                        type === 'mobile' ? 4000 : 
-                        type === 'zu232' ? 200 : 
-                        type === 'igla' ? 5000 : 
-                        60;
-        this.missChance = type === 'f16' ? 0.05 :
-                         type === 'patriot' ? 0.1 : 
-                         type === 's300' ? 0.15 : 
-                         type === 'bukm1' ? 0.2 : 
-                         type === 's125' ? 0.3 : 
-                         type === 'mobile' ? 0.35 : 
-                         type === 'zu232' ? 0.8 : 
-                         type === 'igla' ? 0.3 : 
-                         0.8;
+        this.shotDelay = type === 'f16' ? 5000 : 
+                        type === 'patriot' ? 10000 : 
+                        type === 's300' ? 12500 :
+                        type === 'bukm1' ? 15000 :
+                        type === 's125' ? 25000 :
+                        type === 'mobile' ? 20000 : 
+                        type === 'zu232' ? 250 : 
+                        type === 'igla' ? 25000 : 
+                        type === 'dshk' ? 500 : 
+                        300; 
+        this.missChance = type === 'f16' ? 0.3 : 
+                         type === 'patriot' ? 0.2 : 
+                         type === 's300' ? 0.3 : 
+                         type === 'bukm1' ? 0.4 :
+                         type === 's125' ? 0.6 :
+                         type === 'mobile' ? 0.7 :
+                         type === 'zu232' ? 0.95 :
+                         type === 'igla' ? 0.6 : 
+                         0.99;
         this.moveSpeed = type === 'f16' ? 250 * SCALE_FACTOR :
                         type === 'mobile' ? 10 * SCALE_FACTOR :
                         type === 'patriot' ? 5 * SCALE_FACTOR :
@@ -518,18 +711,38 @@ class PVO {
                         type === 'zu232' ? 7 * SCALE_FACTOR :
                         type === 'igla' ? 8 * SCALE_FACTOR :
                         5 * SCALE_FACTOR;
-        this.energyCost = type === 'f16' ? 10 : 
-                         type === 'patriot' ? 8 : 
-                         type === 's300' ? 6 : 
-                         type === 'bukm1' ? 5 : 
-                         type === 's125' ? 4 : 
-                         type === 'mobile' ? 4 : 
-                         type === 'zu232' ? 2 : 
-                         type === 'igla' ? 3 : 
-                         1;
-        this.lastShot = 0; this.currentShots = 0; this.blink = 0; this.damaged = false;
-        this.currentTarget = null; this.targetX = null; this.targetY = null;
-        this.radiusUpgrades = 0; this.reloadUpgrades = 0;
+        this.energyCost = type === 'f16' ? 8 : 
+                         type === 'patriot' ? 6.4 :
+                         type === 's300' ? 4.8 : 
+                         type === 'bukm1' ? 4 : 
+                         type === 's125' ? 3.2 : 
+                         type === 'mobile' ? 3.2 : 
+                         type === 'zu232' ? 1.6 : 
+                         type === 'igla' ? 2.4 :
+                         0.8; 
+        this.pointCost = type === 'f16' ? 35 : 
+                        type === 'patriot' ? 28 : 
+                        type === 's300' ? 24.5 : 
+                        type === 'bukm1' ? 21 : 
+                        type === 's125' ? 17.5 : 
+                        type === 'mobile' ? 14 : 
+                        type === 'igla' ? 10.5 : 
+                        0; 
+        this.heat = 0;
+        this.maxHeat = type === 'dshk' || type === 'zu232' ? 100 : 0;
+        this.heatPerShot = type === 'dshk' ? 2 :
+                          type === 'zu232' ? 1 :
+                          0;
+        this.coolRate = type === 'dshk' || type === 'zu232' ? 20 : 0;
+        this.lastShot = 0;
+        this.currentShots = 0;
+        this.blink = 0;
+        this.damaged = false;
+        this.currentTarget = null;
+        this.targetX = null;
+        this.targetY = null;
+        this.radiusUpgrades = 0;
+        this.reloadUpgrades = 0;
         this.isReturning = type === 'f16' ? true : false;
         this.returnStartTime = type === 'f16' ? Date.now() : 0;
         this.isReloading = false;
@@ -648,42 +861,53 @@ class PVO {
         }
     }
     shoot(targets) {
-        if (paused || this.damaged || this.isReturning || this.isReloading || Date.now() - this.lastShot < this.shotDelay / gameSpeed || this.energy < this.energyCost) return;
-        const priorityTargets = targets.filter(t => !t.destroyed && (t.target.type === 'factory' || t.target.type === 'military'));
-        const secondaryTargets = targets.filter(t => !t.destroyed && t.target.type !== 'factory' && t.target.type !== 'military');
-        const allTargets = [...priorityTargets, ...secondaryTargets];
-        for (let d of allTargets) {
-            if ((d.type.includes('ballistic') && !['patriot', 's300', 'bukm1'].includes(this.type)) ||
-                (d.type === 'rocket' && ['f16', 'dshk'].includes(this.type))) continue;
-            const dist = Math.hypot(d.x - this.x, d.y - this.y);
-            const effectiveRadius = this.radius * (d.stealth ? (this.type === 'dshk' || this.type === 'mobile' ? 0.5 : this.type === 'f16' ? 1 : 0.8) : 1);
-            if (dist < effectiveRadius) {
-                missiles.push(new Missile(this.x, this.y, d.x, d.y, this.type, this.radius));
-                playSound(this.type === 'f16' ? 1200 : this.type === 'dshk' ? 600 : 500, 200);
-                this.currentShots++;
-                this.ammo--;
-                this.energy -= this.energyCost;
-                if (this.ammo <= 0 && this.shotsBeforeReload !== Infinity) {
-                    this.isReloading = true;
-                    setTimeout(() => {
-                        this.ammo = this.shotsBeforeReload;
-                        this.currentShots = 0;
-                        this.isReloading = false;
-                    }, this.reloadTime / gameSpeed);
-                } else if (this.currentShots >= this.shotsBeforeReload && this.shotsBeforeReload !== Infinity) {
+    if (paused || this.damaged || this.isReturning || this.isReloading || Date.now() - this.lastShot < this.shotDelay / gameSpeed || this.energy < this.energyCost) return;
+    const timeOfDay = getTimeOfDay();
+    let radiusMod = 1;
+    let missMod = 1;
+    if (timeOfDay === 'night' && ['dshk', 'zu232', 'mobile'].includes(this.type)) radiusMod = 0.7;
+    if (timeOfDay === 'morning' || timeOfDay === 'evening') missMod = 1.05;
+    if (weather.type === 'cloudy' && ['dshk', 'zu232', 'mobile'].includes(this.type)) radiusMod *= 0.85;
+    if (weather.type === 'rain') missMod *= 1.1;
+    if (weather.type === 'fog' && !['patriot', 's300', 'bukm1'].includes(this.type)) radiusMod *= 0.7;
+    if (weather.type === 'storm') missMod *= 1.2;
+    this.radius = this.baseRadius * radiusMod;
+    this.missChance *= missMod;
+
+    const priorityTargets = targets.filter(t => !t.destroyed && (t.target.type === 'factory' || t.target.type === 'military'));
+    const secondaryTargets = targets.filter(t => !t.destroyed && t.target.type !== 'factory' && t.target.type !== 'military');
+    const allTargets = [...priorityTargets, ...secondaryTargets];
+    for (let d of allTargets) {
+        if (d.type.includes('ballistic') && !['patriot', 's300', 'bukm1'].includes(this.type)) continue; 
+        const dist = Math.hypot(d.x - this.x, d.y - this.y);
+        const effectiveRadius = this.radius * (d.stealth ? (this.type === 'dshk' || this.type === 'mobile' ? 0.5 : this.type === 'f16' ? 1 : 0.8) : 1);
+        if (dist < effectiveRadius) {
+            missiles.push(new Missile(this.x, this.y, d.x, d.y, this.type, this.radius));
+            playSound(this.type === 'f16' ? 1200 : this.type === 'dshk' ? 600 : 500, 200);
+            this.currentShots++;
+            this.ammo--;
+            this.energy -= this.energyCost;
+            if (this.ammo <= 0 && this.shotsBeforeReload !== Infinity) {
+                this.isReloading = true;
+                setTimeout(() => {
+                    this.ammo = this.shotsBeforeReload;
                     this.currentShots = 0;
-                    this.lastShot = Date.now();
-                    if (this.type === 'f16') {
-                        this.isReturning = true;
-                        this.returnStartTime = Date.now();
-                    }
-                } else {
-                    this.lastShot = Date.now();
+                    this.isReloading = false;
+                }, this.reloadTime / gameSpeed);
+            } else if (this.currentShots >= this.shotsBeforeReload && this.shotsBeforeReload !== Infinity) {
+                this.currentShots = 0;
+                this.lastShot = Date.now();
+                if (this.type === 'f16') {
+                    this.isReturning = true;
+                    this.returnStartTime = Date.now();
                 }
-                return;
+            } else {
+                this.lastShot = Date.now();
             }
+            return;
         }
     }
+}
     takeDamage(damage) {
         this.health -= damage;
         if (this.health <= 0) {
@@ -746,60 +970,70 @@ class Drone {
         return factoriesAndMilitary.length ? factoriesAndMilitary[Math.floor(Math.random() * factoriesAndMilitary.length)] : targets[0];
     }
     move() {
-        if (paused || this.destroyed) return;
-        if (this.type === 'special' && Date.now() - this.lastSoundTime >= 1000 / gameSpeed) {
-            playSound(200, 300);  
-            this.lastSoundTime = Date.now();
-        }
-        if (rebActive && rebStation && Math.hypot(this.x - rebStation.x, this.y - rebStation.y) < rebStation.radius) {
-            this.speed = this.speed / 2;
+    if (paused || this.destroyed) return;
+    if (this.type === 'special' && Date.now() - this.lastSoundTime >= 1000 / gameSpeed) {
+        playSound(200, 300);  
+        this.lastSoundTime = Date.now();
+    }
+    let speedMod = 1;
+    if (weather.type === 'rain') speedMod = 0.9;
+    if (weather.type === 'storm') speedMod = 0.8;
+    if (rebActive && rebStation && Math.hypot(this.x - rebStation.x, this.y - rebStation.y) < rebStation.radius) {
+        this.speed = (this.type === 'special' ? 1250 : 
+                     this.type === 'recon' ? 75 : 
+                     this.type === 'strike' ? 50 : 
+                     this.type === 'decoy' ? 40 : 
+                     this.type === 'swarm' ? 60 : 
+                     this.type === 'kamikaze' ? 45 : 
+                     this.type === 'stealth' ? 50 : 
+                     50) * SCALE_FACTOR * speedMod / 2;
+    } else {
+        this.speed = (this.type === 'special' ? 1250 : 
+                     this.type === 'recon' ? 75 : 
+                     this.type === 'strike' ? 50 : 
+                     this.type === 'decoy' ? 40 : 
+                     this.type === 'swarm' ? 60 : 
+                     this.type === 'kamikaze' ? 45 : 
+                     this.type === 'stealth' ? 50 : 
+                     50) * SCALE_FACTOR * speedMod;
+    }
+    const dx = this.target.x - this.x, dy = this.target.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 166) {
+        const damage = this.type === 'kamikaze' ? 20 : this.type === 'strike' ? 15 : this.type === 'special' ? 25 : 10;
+        if (this.target instanceof TransportPlane) {
+            if (this.target.takeDamage()) {
+                transportPlanes = transportPlanes.filter(t => t !== this.target);
+            }
+        } else if (this.target instanceof PVO) {
+            this.target.takeDamage(damage);
         } else {
-            this.speed = (this.type === 'special' ? 1250 : 
-                         this.type === 'recon' ? 75 : 
-                         this.type === 'strike' ? 50 : 
-                         this.type === 'decoy' ? 40 : 
-                         this.type === 'swarm' ? 60 : 
-                         this.type === 'kamikaze' ? 45 : 
-                         this.type === 'stealth' ? 50 : 
-                         50) * SCALE_FACTOR;
+            this.target.health = Math.max(0, this.target.health - damage);
+            if ([...targets, ...factories].every(t => t.health <= 0)) { 
+                alert('Місію провалено! Усі цілі знищено.');
+                resetGameState();
+            }
         }
-        const dx = this.target.x - this.x, dy = this.target.y - this.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < 166) {
-            const damage = this.type === 'kamikaze' ? 20 : this.type === 'strike' ? 15 : this.type === 'special' ? 25 : 10;
-            if (this.target instanceof TransportPlane) {
-                if (this.target.takeDamage()) {
-                    transportPlanes = transportPlanes.filter(t => t !== this.target);
-                }
-            } else if (this.target instanceof PVO) {
-                this.target.takeDamage(damage);
-            } else {
-                this.target.health = Math.max(0, this.target.health - damage);
-                if ([...targets, ...factories].every(t => t.health <= 0)) { 
-                    alert('Місію провалено! Усі цілі знищено.');
-                    resetGameState();
-                }
-            }
-            this.destroyed = true;
+        this.destroyed = true;
+    } else {
+        const { avoidX, avoidY, cache } = getAvoidanceVector(this.x, this.y, this.avoidanceCache);
+        this.avoidanceCache = cache;
+        const targetDx = dx / dist, targetDy = dy / dist;
+        const combinedDx = targetDx * 0.7 + avoidX * 0.3;
+        const combinedDy = targetDy * 0.7 + avoidY * 0.3;
+        const combinedDist = Math.hypot(combinedDx, combinedDy);
+        if (combinedDist > 0) {
+            this.x += (combinedDx / combinedDist) * this.speed * gameSpeed;
+            this.y += (combinedDy / combinedDist) * this.speed * gameSpeed;
         } else {
-            const { avoidX, avoidY, cache } = getAvoidanceVector(this.x, this.y, this.avoidanceCache);
-            this.avoidanceCache = cache;
-            const targetDx = dx / dist, targetDy = dy / dist;
-            const combinedDx = targetDx * 0.7 + avoidX * 0.3;
-            const combinedDy = targetDy * 0.7 + avoidY * 0.3;
-            const combinedDist = Math.hypot(combinedDx, combinedDy);
-            if (combinedDist > 0) {
-                this.x += (combinedDx / combinedDist) * this.speed * gameSpeed;
-                this.y += (combinedDy / combinedDist) * this.speed * gameSpeed;
-            } else {
-                this.x += targetDx * this.speed * gameSpeed;
-                this.y += targetDy * this.speed * gameSpeed;
-            }
-            if (Math.random() < 0.01 * gameSpeed) {
-                this.target = this.chooseTarget();
-            }
+            this.x += targetDx * this.speed * gameSpeed;
+            this.y += targetDy * this.speed * gameSpeed;
+        }
+        if (Math.random() < 0.01 * gameSpeed) {
+            this.target = this.chooseTarget();
         }
     }
+}
     draw() {
 if (this.type === 'special') {
     const headRadius = 10;
@@ -899,47 +1133,56 @@ class Threat {
                targets[0];
     }
     move() {
-        if (paused || this.destroyed) return;
-        if (this.type.includes('ballistic')) {
-            this.t += 0.01 * gameSpeed;
-            const startX = this.x, startY = -20;
-            const dx = this.target.x - startX, dy = this.target.y - startY;
-            this.x = startX + dx * this.t;
-            this.y = startY + dy * this.t - this.peakAltitude * (1 - Math.pow(1 - 2 * this.t, 2));
-            if (this.t >= 1) {
-                this.target.health = Math.max(0, this.target.health - this.damage);
-                this.destroyed = true;
-                if ([...targets, ...factories].every(t => t.health <= 0)) {
-                    alert('Місію провалено! Усі цілі знищено.');
-                    resetGameState();
-                }
+    if (paused || this.destroyed) return;
+    let speedMod = 1;
+    if (weather.type === 'rain') speedMod = 0.9;
+    if (weather.type === 'storm') speedMod = 0.8;
+    if (this.type.includes('ballistic')) {
+        this.t += 0.01 * gameSpeed;
+        const startX = this.x, startY = -20;
+        const dx = this.target.x - startX, dy = this.target.y - startY;
+        this.x = startX + dx * this.t;
+        this.y = startY + dy * this.t - this.peakAltitude * (1 - Math.pow(1 - 2 * this.t, 2));
+        this.speed = (this.type.includes('ballistic-short') ? 277.78 : 
+                     this.type.includes('ballistic-medium') ? 277.78 : 
+                     this.type === 'rocket' ? 200 : 50) * SCALE_FACTOR * speedMod;
+        if (this.t >= 1) {
+            this.target.health = Math.max(0, this.target.health - this.damage);
+            this.destroyed = true;
+            if ([...targets, ...factories].every(t => t.health <= 0)) {
+                alert('Місію провалено! Усі цілі знищено.');
+                resetGameState();
+            }
+        }
+    } else {
+        this.speed = (this.type.includes('ballistic-short') ? 277.78 : 
+                     this.type.includes('ballistic-medium') ? 277.78 : 
+                     this.type === 'rocket' ? 200 : 50) * SCALE_FACTOR * speedMod;
+        const dx = this.target.x - this.x, dy = this.target.y - this.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 166) {
+            this.target.health = Math.max(0, this.target.health - this.damage);
+            this.destroyed = true;
+            if ([...targets, ...factories].every(t => t.health <= 0)) {
+                alert('Місію провалено! Усі цілі знищено.');
+                resetGameState();
             }
         } else {
-            const dx = this.target.x - this.x, dy = this.target.y - this.y;
-            const dist = Math.hypot(dx, dy);
-            if (dist < 166) {
-                this.target.health = Math.max(0, this.target.health - this.damage);
-                this.destroyed = true;
-                if ([...targets, ...factories].every(t => t.health <= 0)) {
-                    alert('Місію провалено! Усі цілі знищено.');
-                    resetGameState();
-                }
+            const { avoidX, avoidY, cache } = getAvoidanceVector(this.x, this.y, this.avoidanceCache);
+            this.avoidanceCache = cache;
+            const targetDx = dx / dist, targetDy = dy / dist;
+            const combinedDx = targetDx - avoidX * 0.5, combinedDy = targetDy - avoidY * 0.5;
+            const combinedDist = Math.hypot(combinedDx, combinedDy);
+            if (combinedDist > 0) {
+                this.x += (combinedDx / combinedDist) * this.speed * gameSpeed;
+                this.y += (combinedDy / combinedDist) * this.speed * gameSpeed;
             } else {
-                const { avoidX, avoidY, cache } = getAvoidanceVector(this.x, this.y, this.avoidanceCache);
-                this.avoidanceCache = cache;
-                const targetDx = dx / dist, targetDy = dy / dist;
-                const combinedDx = targetDx - avoidX * 0.5, combinedDy = targetDy - avoidY * 0.5;
-                const combinedDist = Math.hypot(combinedDx, combinedDy);
-                if (combinedDist > 0) {
-                    this.x += (combinedDx / combinedDist) * this.speed * gameSpeed;
-                    this.y += (combinedDy / combinedDist) * this.speed * gameSpeed;
-                } else {
-                    this.x += targetDx * this.speed * gameSpeed;
-                    this.y += targetDy * this.speed * gameSpeed;
-                }
+                this.x += targetDx * this.speed * gameSpeed;
+                this.y += targetDy * this.speed * gameSpeed;
             }
         }
     }
+}
     draw() {
         ctx.strokeStyle = this.color;
         ctx.lineWidth = 2;
@@ -1132,7 +1375,7 @@ function spawnCustomDrones() {
     for (let i = 0; i < quantity; i++) {
         const x = Math.random() * canvas.width;
         setTimeout(() => {
-            if (type.includes('ballistic') || type === 'rocket') {
+            if (type.includes('ballistic')) { 
                 threats.push(new Threat(type, x, -20, speedMultiplier));
             } else {
                 drones.push(new Drone(type, x, -20, speedMultiplier));
@@ -1143,25 +1386,24 @@ function spawnCustomDrones() {
 }
 
 function updateShopButtons() {
-    ui.buttons.dshk.disabled = points < 20;
-    ui.buttons.zu232.disabled = points < 40;
-    ui.buttons.s125.disabled = points < 100;
-    ui.buttons.mobile.disabled = points < 80;
-    ui.buttons.bukm1.disabled = points < 150;
-    ui.buttons.s300.disabled = points < 200;
-    ui.buttons.patriot.disabled = points < 300;
-    ui.buttons.igla.disabled = points < 60;
-    ui.buttons.f16.disabled = points < 400 || !airbase;
-    ui.buttons.airbase.disabled = points < 600 || airbase !== null;
-    ui.buttons.factory.disabled = points < 250;
-    ui.buttons.upgradeRadius.disabled = !selectedPVO || points < 25 * Math.pow(2, selectedPVO ? selectedPVO.radiusUpgrades : 0) || (selectedPVO && selectedPVO.radiusUpgrades >= 5);
-    ui.buttons.upgradeReload.disabled = !selectedPVO || points < 50 * Math.pow(2, selectedPVO ? selectedPVO.reloadUpgrades : 0) || (selectedPVO && selectedPVO.reloadUpgrades >= 5);
-    ui.buttons.reb.disabled = points < 100;
+    ui.buttons.dshk.disabled = points < 40; 
+    ui.buttons.zu232.disabled = points < 80; 
+    ui.buttons.s125.disabled = points < 200; 
+    ui.buttons.mobile.disabled = points < 160; 
+    ui.buttons.bukm1.disabled = points < 300; 
+    ui.buttons.s300.disabled = points < 400;
+    ui.buttons.patriot.disabled = points < 600; 
+    ui.buttons.igla.disabled = points < 120;
+    ui.buttons.f16.disabled = points < 800 || !airbase; 
+    ui.buttons.airbase.disabled = points < 1200 || airbase !== null; 
+    ui.buttons.factory.disabled = points < 500; 
+    ui.buttons.reb.disabled = points < 200; 
     ui.buttons.move.disabled = !pvoUnits.length;
-    ui.buttons.upgradeRadius.textContent = `Радіус (+${selectedPVO ? 25 * Math.pow(2, selectedPVO.radiusUpgrades) : 25})`;
-    ui.buttons.upgradeReload.textContent = `Перезарядка (+${selectedPVO ? 50 * Math.pow(2, selectedPVO.reloadUpgrades) : 50})`;
+    ui.buttons.upgradeRadius.disabled = !selectedPVO || points < 50 * Math.pow(2, selectedPVO ? selectedPVO.radiusUpgrades : 0) || (selectedPVO && selectedPVO.radiusUpgrades >= 5);
+    ui.buttons.upgradeReload.disabled = !selectedPVO || points < 100 * Math.pow(2, selectedPVO ? selectedPVO.reloadUpgrades : 0) || (selectedPVO && selectedPVO.reloadUpgrades >= 5);  
+    ui.buttons.upgradeRadius.textContent = `Радіус (+${selectedPVO ? 50 * Math.pow(2, selectedPVO.radiusUpgrades) : 50})`;
+    ui.buttons.upgradeReload.textContent = `Перезарядка (+${selectedPVO ? 100 * Math.pow(2, selectedPVO.reloadUpgrades) : 100})`;
 }
-
 let lastWaveTime = Date.now();
 function spawnWave() {
     if (paused || Date.now() - lastWaveTime < 7000 / gameSpeed || drones.length + threats.length >= 30) return;
@@ -1187,24 +1429,23 @@ function spawnWave() {
             threats.push(new Threat(Math.random() < 0.7 ? 'ballistic-short' : 'ballistic-medium'));
         }, 100 / gameSpeed);
     }
-    if (wave >= 3 && Math.random() < 0.5) {
-        for (let i = 0; i < 2; i++) {
-            setTimeout(() => {
-                threats.push(new Threat('rocket', Math.random() * canvas.width, -20));
-            }, i * 100 / gameSpeed);
-        }
-    }
     lastWaveTime = Date.now();
 }
-
 function generatePointsFromFactories() {
     if (paused) return;
     factories.forEach(f => f.generatePoints());
 }
 
-let touches = [];
+
 canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault(); touches = Array.from(e.touches);
+    e.preventDefault();
+    touches = Array.from(e.touches);
+    if (touches.length === 1 && !moveMode && !pendingBuy && !pendingAirbase && !pendingFactory) {
+        const rect = canvas.getBoundingClientRect();
+        const mx = (touches[0].clientX - rect.left - offsetX) / scale;
+        const my = (touches[0].clientY - rect.top - offsetY) / scale;
+        selectedPVO = pvoUnits.find(p => Math.hypot(p.x - mx, p.y - my) < 166) || null;
+    }
 });
 canvas.addEventListener('touchmove', (e) => {
     e.preventDefault();
@@ -1212,15 +1453,215 @@ canvas.addEventListener('touchmove', (e) => {
     if (newTouches.length === 2 && touches.length === 2) {
         const oldDist = Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
         const newDist = Math.hypot(newTouches[0].clientX - newTouches[1].clientX, newTouches[0].clientY - newTouches[1].clientY);
-        scale = Math.max(0.1, Math.min(scale * (newDist / oldDist), 1));
-        offsetX += (newTouches[0].clientX + newTouches[1].clientX - touches[0].clientX - touches[1].clientX) / 2;
-        offsetY += (newTouches[0].clientY + newTouches[1].clientY - touches[0].clientY - touches[1].clientY) / 2;
+        const zoom = newDist / oldDist;
+        const newScale = Math.max(0.1, Math.min(scale * zoom, 1));
+        const centerX = (newTouches[0].clientX + newTouches[1].clientX) / 2;
+        const centerY = (newTouches[0].clientY + newTouches[1].clientY) / 2;
+        offsetX = centerX - (centerX - offsetX) * (newScale / scale);
+        offsetY = centerY - (centerY - offsetY) * (newScale / scale);
+        scale = newScale;
         document.getElementById('map-background').style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     } else if (newTouches.length === 1 && !moveMode && !pendingBuy && !pendingAirbase && !pendingFactory) {
-        offsetX += newTouches[0].clientX - touches[0].clientX; offsetY += newTouches[0].clientY - touches[0].clientY;
+        offsetX += newTouches[0].clientX - touches[0].clientX;
+        offsetY += newTouches[0].clientY - touches[0].clientY;
         document.getElementById('map-background').style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
     }
     touches = newTouches;
+
+ 
+    if (newTouches.length === 1) {
+        const rect = canvas.getBoundingClientRect();
+        const mx = (newTouches[0].clientX - rect.left - offsetX) / scale;
+        const my = (newTouches[0].clientY - rect.top - offsetY) / scale;
+        const hovered = [...drones, ...threats].find(d => Math.hypot(d.x - mx, d.y - my) < 83);
+        if (hovered && pvoUnits.length > 0) {
+            ui.telemetry.style.display = 'block';
+            ui.telemetry.style.left = `${newTouches[0].clientX + 10}px`;
+            ui.telemetry.style.top = `${newTouches[0].clientY + 10}px`;
+            const nearestPVO = pvoUnits.reduce((min, p) => Math.hypot(p.x - hovered.x, p.y - hovered.y) < Math.hypot(min.x - hovered.x, min.y - hovered.y) ? p : min, pvoUnits[0]);
+            ui.telemetry.innerHTML = `Тип: ${hovered.type === 'recon' ? 'Орлан' : hovered.type === 'strike' ? 'Ланцет' : 
+                                     hovered.type === 'decoy' ? 'Декой' : hovered.type === 'swarm' ? 'Рій' : 
+                                     hovered.type === 'kamikaze' ? 'Шахед' : hovered.type === 'stealth' ? 'Стелс' : 
+                                     hovered.type === 'special' ? 'Спеціальний' : 
+                                     hovered.type === 'ballistic-short' ? 'Іскандер' : hovered.type === 'ballistic-medium' ? 'Точка-У' : 'Град'}<br>` +
+                                     `Швидкість: ${(hovered.speed / SCALE_FACTOR).toFixed(0)} м/с<br>` +
+                                     `Відстань до ППО: ${nearestPVO ? (Math.hypot(nearestPVO.x - hovered.x, nearestPVO.y - hovered.y) / 100).toFixed(0) : 'Н/Д'} км`;
+        } else {
+            ui.telemetry.style.display = 'none';
+        }
+    }
+});
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    if (touches.length === 1 && (pendingBuy || pendingAirbase || pendingFactory || moveMode)) {
+        const rect = canvas.getBoundingClientRect();
+        const mx = (touches[0].clientX - rect.left - offsetX) / scale;
+        const my = (touches[0].clientY - rect.top - offsetY) / scale;
+        if (pendingBuy) {
+            placePVO(mx, my, pendingBuy);
+        } else if (pendingAirbase) {
+            placeAirbase(mx, my);
+        } else if (pendingFactory) {
+            placeFactory(mx, my);
+        } else if (moveMode && selectedPVO) {
+            selectedPVO.targetX = mx;
+            selectedPVO.targetY = my;
+        }
+    }
+    touches = [];
+});
+
+let touches = [];
+
+function adjustUIForMobile() {
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const uiContainer = document.getElementById('ui');
+    const shopContainer = document.getElementById('shop');
+    const minimap = document.getElementById('minimap');
+    const canvas = document.getElementById('gameCanvas');
+
+    if (isMobile) {
+        uiContainer.style.fontSize = '12px';
+        uiContainer.style.padding = '5px';
+        shopContainer.style.display = 'block';
+        shopContainer.style.fontSize = '12px';
+        shopContainer.style.padding = '5px';
+        shopContainer.style.maxWidth = '90%';
+        shopContainer.style.maxHeight = '50vh';
+        shopContainer.style.overflowY = 'auto';
+        shopContainer.style.bottom = '80px';
+        shopContainer.style.left = '5px';
+        shopContainer.style.right = '5px';
+
+        minimap.style.width = '100px';
+        minimap.style.height = '100px';
+        minimap.width = 100;
+        minimap.height = 100;
+
+        const buttons = shopContainer.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.style.padding = '6px 8px';
+            button.style.fontSize = '11px';
+            button.style.margin = '2px';
+            button.style.width = '100%';
+        });
+
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+    } else {
+        uiContainer.style.fontSize = '16px';
+        uiContainer.style.padding = '10px';
+        shopContainer.style.display = 'block';
+        shopContainer.style.fontSize = '16px';
+        shopContainer.style.padding = '10px';
+        shopContainer.style.maxWidth = 'none';
+        shopContainer.style.maxHeight = 'none';
+        shopContainer.style.overflowY = 'visible';
+        shopContainer.style.bottom = '10px';
+        shopContainer.style.left = '10px';
+        shopContainer.style.right = 'auto';
+
+        minimap.style.width = '200px';
+        minimap.style.height = '200px';
+        minimap.width = 200;
+        minimap.height = 200;
+
+        const buttons = shopContainer.querySelectorAll('button');
+        buttons.forEach(button => {
+            button.style.padding = '5px 10px';
+            button.style.fontSize = '14px';
+            button.style.margin = '2px';
+            button.style.width = 'auto';
+        });
+
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+    }
+}
+
+function initializeCanvas() {
+    const canvas = document.getElementById('gameCanvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+}
+
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    touches = Array.from(e.touches);
+});
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const newTouches = Array.from(e.touches);
+    
+    if (newTouches.length === 2 && touches.length === 2) {
+        
+        const oldDist = Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+        const newDist = Math.hypot(newTouches[0].clientX - newTouches[1].clientX, newTouches[0].clientY - newTouches[1].clientY);
+        const zoom = newDist / oldDist;
+        const newScale = Math.max(0.5, Math.min(scale * zoom, 2)); 
+        const centerX = (newTouches[0].clientX + newTouches[1].clientX) / 2;
+        const centerY = (newTouches[0].clientY + newTouches[1].clientY) / 2;
+        offsetX = centerX - (centerX - offsetX) * (newScale / scale);
+        offsetY = centerY - (centerY - offsetY) * (newScale / scale);
+        scale = newScale;
+    } else if (newTouches.length === 1 && !moveMode && !pendingBuy && !pendingAirbase && !pendingFactory) {
+       
+        const dx = newTouches[0].clientX - touches[0].clientX;
+        const dy = newTouches[0].clientY - touches[0].clientY;
+        offsetX += dx;
+        offsetY += dy;
+
+        
+        const mapWidth = canvas.width / scale;
+        const mapHeight = canvas.height / scale;
+        offsetX = Math.max(-mapWidth, Math.min(mapWidth, offsetX));
+        offsetY = Math.max(-mapHeight, Math.min(mapHeight, offsetY));
+    }
+
+
+    document.getElementById('map-background').style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+    touches = newTouches;
+
+    
+    if (newTouches.length === 1) {
+        const rect = canvas.getBoundingClientRect();
+        const mx = (newTouches[0].clientX - rect.left - offsetX) / scale;
+        const my = (newTouches[0].clientY - rect.top - offsetY) / scale;
+        const hovered = [...drones, ...threats].find(d => Math.hypot(d.x - mx, d.y - my) < 83);
+        if (hovered && pvoUnits.length > 0) {
+            ui.telemetry.style.display = 'block';
+            ui.telemetry.style.left = `${newTouches[0].clientX + 10}px`;
+            ui.telemetry.style.top = `${newTouches[0].clientY + 10}px`;
+            const nearestPVO = pvoUnits.reduce((min, p) => Math.hypot(p.x - hovered.x, p.y - hovered.y) < Math.hypot(min.x - hovered.x, min.y - hovered.y) ? p : min, pvoUnits[0]);
+            ui.telemetry.innerHTML = `Тип: ${hovered.type === 'recon' ? 'Орлан' : hovered.type === 'strike' ? 'Ланцет' : 
+                                    hovered.type === 'decoy' ? 'Декой' : hovered.type === 'swarm' ? 'Рій' : 
+                                    hovered.type === 'kamikaze' ? 'Шахед' : hovered.type === 'stealth' ? 'Стелс' : 
+                                    hovered.type === 'special' ? 'Спеціальний' : 
+                                    hovered.type === 'ballistic-short' ? 'Іскандер' : hovered.type === 'ballistic-medium' ? 'Точка-У' : 'Град'}<br>` +
+                                    `Швидкість: ${(hovered.speed / SCALE_FACTOR).toFixed(0)} м/с<br>` +
+                                    `Відстань до ППО: ${nearestPVO ? (Math.hypot(nearestPVO.x - hovered.x, nearestPVO.y - hovered.y) / 100).toFixed(0) : 'Н/Д'} км`;
+        } else {
+            ui.telemetry.style.display = 'none';
+        }
+    }
+});
+
+canvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    touches = [];
+});
+
+
+window.addEventListener('load', () => {
+    adjustUIForMobile();
+    initializeCanvas();
+});
+window.addEventListener('resize', () => {
+    adjustUIForMobile();
+    initializeCanvas();
 });
 
 canvas.addEventListener('wheel', (e) => {
@@ -1230,6 +1671,116 @@ canvas.addEventListener('wheel', (e) => {
     offsetX = e.clientX - (e.clientX - offsetX) * zoom; offsetY = e.clientY - (e.clientY - offsetY) * zoom;
     document.getElementById('map-background').style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
 });
+function renderMinimap() {
+    const minimapSize = window.matchMedia("(max-width: 768px)").matches ? 100 : 200;
+    mctx.clearRect(0, 0, minimapSize, minimapSize);
+    mctx.fillStyle = '#111';
+    mctx.fillRect(0, 0, minimapSize, minimapSize);
+    
+    [...targets, ...factories].forEach(t => {
+        mctx.fillStyle = t.type === 'military' ? 'rgba(0, 255, 255, 0.5)' : t.type === 'factory' ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 165, 0, 0.5)';
+        mctx.beginPath();
+        mctx.moveTo(t.x * minimapSize / canvas.width + t.shape[0].x / 50, t.y * minimapSize / canvas.height + t.shape[0].y / 50);
+        for (let i = 1; i < t.shape.length; i++) {
+            mctx.lineTo(t.x * minimapSize / canvas.width + t.shape[i].x / 50, t.y * minimapSize / canvas.height + t.shape[i].y / 50);
+        }
+        mctx.closePath();
+        mctx.fill();
+    });
+    
+    if (airbase) {
+        mctx.fillStyle = 'gray';
+        mctx.fillRect(airbase.x * minimapSize / canvas.width - 2, airbase.y * minimapSize / canvas.height - 2, 4, 4);
+    }
+    
+    pvoUnits.forEach(p => {
+        if (p && !p.damaged) {
+            mctx.beginPath();
+            mctx.arc(p.x * minimapSize / canvas.width, p.y * minimapSize / canvas.height, minimapSize === 100 ? 2 : 4, 0, Math.PI * 2);
+            mctx.fillStyle = p.type === 'f16' ? 'cyan' : p.type === 'patriot' ? 'white' : p.type === 's300' ? 'purple' : p.type === 'bukm1' ? 'cyan' : p.type === 's125' ? 'blue' : p.type === 'mobile' ? 'green' : p.type === 'zu232' ? 'yellow' : p.type === 'igla' ? 'lightblue' : 'orange';
+            mctx.fill();
+        }
+    });
+    
+    transportPlanes.forEach(t => {
+        if (!t.destroyed) {
+            mctx.beginPath();
+            mctx.arc(t.x * minimapSize / canvas.width, t.y * minimapSize / canvas.height, minimapSize === 100 ? 2 : 4, 0, Math.PI * 2);
+            mctx.fillStyle = 'gray';
+            mctx.fill();
+        }
+    });
+    
+    if (rebStation) {
+        mctx.beginPath();
+        mctx.arc(rebStation.x * minimapSize / canvas.width, rebStation.y * minimapSize / canvas.height, minimapSize === 100 ? 2 : 4, 0, Math.PI * 2);
+        mctx.fillStyle = 'pink';
+        mctx.fill();
+    }
+    
+    [...drones, ...threats].forEach(d => {
+        if (!d.destroyed) {
+            mctx.beginPath();
+            mctx.arc(d.x * minimapSize / canvas.width, d.y * minimapSize / canvas.height, d.type.includes('ballistic') ? (minimapSize === 100 ? 1.5 : 3) : (minimapSize === 100 ? 1 : 2), 0, Math.PI * 2);
+            mctx.fillStyle = d.color;
+            mctx.fill();
+        }
+    });
+}
+    const minimapSize = window.matchMedia("(max-width: 768px)").matches ? 100 : 200;
+    mctx.clearRect(0, 0, minimapSize, minimapSize);
+    mctx.fillStyle = '#111';
+    mctx.fillRect(0, 0, minimapSize, minimapSize);
+    
+    [...targets, ...factories].forEach(t => {
+        mctx.fillStyle = t.type === 'military' ? 'rgba(0, 255, 255, 0.5)' : t.type === 'factory' ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 165, 0, 0.5)';
+        mctx.beginPath();
+        mctx.moveTo(t.x * minimapSize / canvas.width + t.shape[0].x / 50, t.y * minimapSize / canvas.height + t.shape[0].y / 50);
+        for (let i = 1; i < t.shape.length; i++) {
+            mctx.lineTo(t.x * minimapSize / canvas.width + t.shape[i].x / 50, t.y * minimapSize / canvas.height + t.shape[i].y / 50);
+        }
+        mctx.closePath();
+        mctx.fill();
+    });
+    
+    if (airbase) {
+        mctx.fillStyle = 'gray';
+        mctx.fillRect(airbase.x * minimapSize / canvas.width - 2, airbase.y * minimapSize / canvas.height - 2, 4, 4);
+    }
+    
+    pvoUnits.forEach(p => {
+        if (p && !p.damaged) {
+            mctx.beginPath();
+            mctx.arc(p.x * minimapSize / canvas.width, p.y * minimapSize / canvas.height, minimapSize === 100 ? 2 : 4, 0, Math.PI * 2);
+            mctx.fillStyle = p.type === 'f16' ? 'cyan' : p.type === 'patriot' ? 'white' : p.type === 's300' ? 'purple' : p.type === 'bukm1' ? 'cyan' : p.type === 's125' ? 'blue' : p.type === 'mobile' ? 'green' : p.type === 'zu232' ? 'yellow' : p.type === 'igla' ? 'lightblue' : 'orange';
+            mctx.fill();
+        }
+    });
+    
+    transportPlanes.forEach(t => {
+        if (!t.destroyed) {
+            mctx.beginPath();
+            mctx.arc(t.x * minimapSize / canvas.width, t.y * minimapSize / canvas.height, minimapSize === 100 ? 2 : 4, 0, Math.PI * 2);
+            mctx.fillStyle = 'gray';
+            mctx.fill();
+        }
+    });
+    
+    if (rebStation) {
+        mctx.beginPath();
+        mctx.arc(rebStation.x * minimapSize / canvas.width, rebStation.y * minimapSize / canvas.height, minimapSize === 100 ? 2 : 4, 0, Math.PI * 2);
+        mctx.fillStyle = 'pink';
+        mctx.fill();
+    }
+    
+    [...drones, ...threats].forEach(d => {
+        if (!d.destroyed) {
+            mctx.beginPath();
+            mctx.arc(d.x * minimapSize / canvas.width, d.y * minimapSize / canvas.height, d.type.includes('ballistic') ? (minimapSize === 100 ? 1.5 : 3) : (minimapSize === 100 ? 1 : 2), 0, Math.PI * 2);
+            mctx.fillStyle = d.color;
+            mctx.fill();
+        }
+    });
 
 let isDragging = false, lastX, lastY;
 canvas.addEventListener('mousedown', (e) => {
@@ -1314,10 +1865,49 @@ document.addEventListener('keydown', (e) => {
 
 function renderScene() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save(); ctx.translate(offsetX, offsetY); ctx.scale(scale, scale);
+    ctx.save();
+    
+   
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#1f2a44');
+    gradient.addColorStop(1, '#0f172a'); 
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+
+    if (weather.type === 'cloudy') {
+        ctx.globalAlpha = 0.4;
+        ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1;
+    } else if (weather.type === 'fog') {
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1;
+    } else if (weather.type === 'rain' || weather.type === 'storm') {
+        ctx.strokeStyle = weather.type === 'storm' ? 'rgba(200, 200, 255, 0.9)' : 'rgba(100, 100, 255, 0.6)';
+        ctx.lineWidth = 1;
+        weatherParticles.forEach(p => {
+            ctx.globalAlpha = p.alpha;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x + p.vx, p.y + p.vy);
+            ctx.stroke();
+            p.x += p.vx * gameSpeed;
+            p.y += p.vy * gameSpeed;
+            p.alpha -= 0.02 * gameSpeed;
+        });
+        ctx.globalAlpha = 1;
+    }
+
+    ctx.translate(offsetX, offsetY); 
+    ctx.scale(scale, scale);
+
     drawCitiesAndFactories();
     if (airbase) airbase.draw();
     if (rebStation) rebStation.draw();
+
     pvoUnits.forEach(p => {
         if (p && !p.damaged) {
             p.draw();
@@ -1327,13 +1917,34 @@ function renderScene() {
             }
         }
     });
-    transportPlanes.forEach(t => { if (!t.destroyed) { t.draw(); if (!paused) t.move(); } });
+
+    transportPlanes.forEach(t => {
+        if (!t.destroyed) {
+            t.draw();
+            if (!paused) t.move();
+        }
+    });
+
     ctx.fillStyle = 'white';
     ctx.beginPath();
-    drones.forEach(d => { if (!d.destroyed) d.draw(); if (!paused) d.move(); });
-    threats.forEach(t => { if (!t.destroyed) t.draw(); if (!paused) t.move(); });
-    missiles.forEach(m => { m.draw(); if (!paused && m.move()) m.missed = true; });
+
+    drones.forEach(d => {
+        if (!d.destroyed) d.draw();
+        if (!paused) d.move();
+    });
+
+    threats.forEach(t => {
+        if (!t.destroyed) t.draw();
+        if (!paused) t.move();
+    });
+
+    missiles.forEach(m => {
+        m.draw();
+        if (!paused && m.move()) m.missed = true;
+    });
+
     explosions.forEach(e => e.draw());
+
     ctx.restore();
 }
 
@@ -1381,6 +1992,23 @@ function renderMinimap() {
 }
 
 function gameLoop() {
+    if (!paused) {
+        gameTime += gameSpeed / FPS / 25; 
+        if (Date.now() >= weather.nextChange) changeWeather();
+        weatherParticles = weatherParticles.filter(p => p.alpha > 0);
+        if (weather.type === 'rain' || weather.type === 'storm') {
+            for (let i = 0; i < 5 * gameSpeed; i++) {
+                weatherParticles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (weather.type === 'storm' ? (Math.random() - 0.5) * 10 : -2),
+                    vy: 10,
+                    alpha: 1
+                });
+            }
+        }
+    }
+
     renderScene();
     renderMinimap();
     if (!paused) {
@@ -1394,7 +2022,11 @@ function gameLoop() {
         pvoUnits = pvoUnits.filter(p => p && !p.damaged);
     }
     ui.points.textContent = points;
-    ui.targets.textContent = drones.length + threats.length; ui.kills.textContent = kills; ui.wave.textContent = wave;
+    ui.targets.textContent = drones.length + threats.length;
+    ui.kills.textContent = kills;
+    ui.wave.textContent = wave;
+    ui.timeOfDay.textContent = getTimeOfDay() === 'morning' ? 'Ранок' : getTimeOfDay() === 'day' ? 'День' : getTimeOfDay() === 'evening' ? 'Вечір' : 'Ніч';
+    ui.weather.textContent = weather.type === 'clear' ? 'Ясно' : weather.type === 'cloudy' ? 'Хмарно' : weather.type === 'rain' ? 'Дощ' : weather.type === 'fog' ? 'Туман' : 'Шторм';
     updateShopButtons();
     requestAnimationFrame(gameLoop);
 }
